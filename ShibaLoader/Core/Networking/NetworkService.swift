@@ -1,5 +1,5 @@
 import Alamofire
 
-class NetworkService {
+class NetworkService: NetworkServiceProtocol {
     
 }
