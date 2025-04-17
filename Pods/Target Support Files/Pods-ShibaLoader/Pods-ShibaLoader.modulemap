@@ -1,0 +1,6 @@
+framework module Pods_ShibaLoader {
+  umbrella header "Pods-ShibaLoader-umbrella.h"
+
+  export *
+  module * { export * }
+}
