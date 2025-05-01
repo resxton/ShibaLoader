@@ -18,8 +18,6 @@ class ImagesViewPresenter: ImagesViewOutput {
     
     // MARK: - Public Methods
     
-    func viewDidLoad() {}
-    
     func didTapLoadImagesButton() {
         loadImages()
     }
@@ -27,7 +25,11 @@ class ImagesViewPresenter: ImagesViewOutput {
     // MARK: - Private Methods
     
     private func loadImages() {
-        view?.setLoaderVisible(true)
+        guard let view else { return }
+
+        DispatchQueue.main.async {
+            view.setLoaderVisible(true)
+        }
         
         let group = DispatchGroup()
         var dataArray: [Data] = []
@@ -43,17 +45,21 @@ class ImagesViewPresenter: ImagesViewOutput {
                 case .success(let data):
                     dataArray.append(data)
                 case .failure(let error):
-                    print(Consts.errorMessage, error.localizedDescription)
+                    DispatchQueue.main.async {
+                        view
+                            .presentAlert(
+                                title: Consts.errorMessage,
+                                message: error.localizedDescription
+                            )
+                    }
                 }
             }
         }
         
-        group.notify(queue: .main) { [weak self] in
-            guard let self,
-                  let view else { return }
+        group.notify(queue: .main) {
+            guard let view = self.view else { return }
             
             view.setLoaderVisible(false)
-            view.disableLoadImagesButton()
             view.setImages(from: dataArray)
         }
     }
@@ -67,6 +73,6 @@ extension ImagesViewPresenter {
             "https://i.pinimg.com/736x/cf/22/80/cf22809e688aa6f40dd8cd32f056f10e.jpg"
         ]
         
-        static let errorMessage: String = "Download error "
+        static let errorMessage: String = "Ошибка загрузки"
     }
 }

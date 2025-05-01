@@ -18,7 +18,7 @@ class ImagesViewController: UIViewController {
             fatalError(Consts.placeholderErrorMessage)
         }
         
-        for _ in 0..<3 {
+        for _ in 0..<Consts.imageCount {
             let imageView = UIImageView(image: placeholderImage)
             imageView.contentMode = .scaleAspectFit
             imageView.backgroundColor = Consts.imageBackgroundColor
@@ -45,7 +45,7 @@ class ImagesViewController: UIViewController {
         button.setTitleColor(.customBlack, for: .normal)
         if let titleLabel = button.titleLabel {
             titleLabel.font = UIFont(
-                name: "TinkoffSans-Medium",
+                name: Consts.fontName,
                 size: Consts.loadImagesButtonTitleFontSize
             )
         }
@@ -65,7 +65,7 @@ class ImagesViewController: UIViewController {
     
     // MARK: - Private Properties
     
-    private let presenter: ImagesViewOutput!
+    private let presenter: ImagesViewOutput
     
     // MARK: - Initializers
     
@@ -85,8 +85,6 @@ class ImagesViewController: UIViewController {
         
         setupUI()
         setupConstraints()
-        
-        presenter.viewDidLoad()
     }
     
     // MARK: - Private Methods
@@ -121,11 +119,11 @@ class ImagesViewController: UIViewController {
                 if index == 0 {
                     make.height
                         .lessThanOrEqualTo(verticalStack.snp.height)
-                    /// Высота первой картинки — треть высоты stackView
-                        .multipliedBy(1.0 / 3.0)
-                    /// с учетом вертикальных отступов
+                    /// Высота первой картинки — 1 / n высоты stackView, где n – число картинок
+                        .multipliedBy(1.0 / CGFloat(Consts.imageCount))
+                    /// с учетом вертикальных отступов (на 1 меньше, чем картинок)
                         .offset(
-                            -2 * Consts.verticalSpacing / 3.0
+                            -CGFloat((Consts.imageCount - 1)) * Consts.verticalSpacing / CGFloat(Consts.imageCount)
                         )
                 } else {
                     /// Высоты картинок равны
@@ -148,43 +146,36 @@ class ImagesViewController: UIViewController {
 
 extension ImagesViewController: ImagesViewInput {
     func setLoaderVisible(_ isVisible: Bool) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            
-            if isVisible {
-                UIView.animate(withDuration: Consts.animationDuration) {
-                    self.loader.alpha = 1
-                    self.loader.startAnimating()
-                }
-            } else {
-                UIView.animate(withDuration: Consts.animationDuration, animations: {
-                    self.loader.alpha = 0
-                }, completion: { _ in
-                    self.loader.stopAnimating()
-                })
+        if isVisible {
+            UIView.animate(withDuration: Consts.animationDuration) {
+                self.loader.alpha = 1
+                self.loader.startAnimating()
             }
+        } else {
+            UIView.animate(withDuration: Consts.animationDuration, animations: {
+                self.loader.alpha = 0
+            }, completion: { _ in
+                self.loader.stopAnimating()
+            })
         }
     }
     
     func presentAlert(title: String, message: String?) {
-        DispatchQueue.main.async { [weak self] in
-            guard let self else { return }
-            let alert = UIAlertController(
-                title: title,
-                message: message,
-                preferredStyle: .alert
-            )
-            let action = UIAlertAction(
-                title: Consts.actionTitle,
-                style: .cancel
-            )
-            alert.addAction(action)
-            present(alert, animated: true)
-        }
+        let alert = UIAlertController(
+            title: title,
+            message: message,
+            preferredStyle: .alert
+        )
+        let action = UIAlertAction(
+            title: Consts.actionTitle,
+            style: .cancel
+        )
+        alert.addAction(action)
+        present(alert, animated: true)
     }
     
     func setImages(from dataArray: [Data]) {
-        guard dataArray.count == 3 else { return }
+        guard dataArray.count == Consts.imageCount else { return }
         
         for (index, arrangedSubview) in verticalStack.arrangedSubviews.enumerated() {
             let image = UIImage(data: dataArray[index])
@@ -192,10 +183,6 @@ extension ImagesViewController: ImagesViewInput {
                 imageSubview.image = image
             }
         }
-    }
-    
-    func disableLoadImagesButton() {
-        loadImagesButton.isEnabled = false
     }
 }
 
@@ -207,6 +194,7 @@ extension ImagesViewController {
         static let placeholderErrorMessage: String = "No such image"
         static let actionTitle: String = "ОК"
         static let loadImagesButtonTitle: String = "Загрузить картинки"
+        static let fontName: String = "TinkoffSans-Medium"
 
         static let imageBackgroundColor: UIColor = .white
         static let animationDuration: TimeInterval = 0.3
@@ -216,5 +204,7 @@ extension ImagesViewController {
         static let cornerRadius: CGFloat = 16
         static let loadImagesButtonTitleFontSize: CGFloat = 24
         static let disabledStateAlpha: CGFloat = 0.5
+        
+        static let imageCount: Int = 3
     }
 }
